@@ -24,15 +24,5 @@ jobs:
       - name: Build
         run: uv build
 
-        # publish version only when pyproject.toml is changed in master
-      - name: Filter changes in pyproject
-        uses: dorny/paths-filter@v2
-        id: changes
-        with:
-          filters: |
-            root:
-              - 'pyproject.toml'
-
-      - if: ${{ (github.ref == 'refs/heads/main') && (steps.changes.outputs.root == 'true')}}
-        name: Publish release distributions to PyPI
+      - name: Publish release distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
