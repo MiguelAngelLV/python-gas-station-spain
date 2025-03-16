@@ -6,6 +6,7 @@ from .gas_station import (
     get_price,
     get_products,
     get_provinces,
+    get_gas_station,
 )
 
 __all__ = [
@@ -14,4 +15,5 @@ __all__ = [
     "get_price",
     "get_products",
     "get_provinces",
+    "get_gas_station",
 ]
