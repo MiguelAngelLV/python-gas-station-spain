@@ -1,4 +1,5 @@
 # pylint: disable=C0116,C0114
+import random
 
 import pytest
 
@@ -60,6 +61,21 @@ async def test_get_stations():
     stations = await gss.get_gas_stations(province_id=4, municipality_id=292)
     assert len(stations) > 10
     assert any(p.marquee == "Alcampo" for p in stations)
+
+
+@pytest.mark.asyncio
+async def test_get_station_by_id():
+    stations = await gss.get_gas_stations(province_id=4, municipality_id=292)
+    elements = random.sample(stations, 3)
+    for s in elements:
+        station = await gss.get_gas_station(station_id=s.id)
+        assert s.id == station.id
+        assert s.marquee == station.marquee
+        assert s.address == station.address
+        assert s.province == station.province
+        assert s.latitude == station.latitude
+        assert s.longitude == station.longitude
+        assert s.municipality == station.municipality
 
 
 @pytest.mark.asyncio

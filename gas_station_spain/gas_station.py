@@ -7,7 +7,7 @@ import tenacity
 from tenacity import stop_after_attempt, wait_fixed
 
 _STATIONS_ENDPOINT = "https://geoportalgasolineras.es/geoportal/rest/busquedaEstaciones"
-_PRICES_ENDPOINT = (
+_STATION_ENDPOINT = (
     "https://geoportalgasolineras.es/geoportal/rest/{}/busquedaEstacionPrecio"
 )
 _PROVINCES_ENDPOINT = "https://geoportalgasolineras.es/geoportal/rest/getProvincias"
@@ -72,7 +72,7 @@ class GasStation:
     municipality: str
 
     @staticmethod
-    def from_dict(data: dict) -> "GasStation":
+    def from_list(data: dict) -> "GasStation":
         """Create GasStation from a dictionary."""
         return GasStation(
             id=data["id"],
@@ -81,6 +81,19 @@ class GasStation:
             province=data["provincia"],
             latitude=data["coordenadaY_dec"],
             longitude=data["coordenadaX_dec"],
+            municipality=data["localidad"].strip().title(),
+        )
+
+    @staticmethod
+    def from_individual(data: dict) -> "GasStation":
+        """Create GasStation from a dictionary."""
+        return GasStation(
+            id=data["eessId"],
+            marquee=data["rotulo"].title(),
+            address=data["direccion"],
+            province=data["provincia"],
+            latitude=data["coordenadaY"],
+            longitude=data["coordenadaX"],
             municipality=data["localidad"].strip().title(),
         )
 
@@ -107,7 +120,7 @@ async def get_gas_stations(
 
     data = await response.json()
     await session.close()
-    return [GasStation.from_dict(s["estacion"]) for s in data["estaciones"]]
+    return [GasStation.from_list(s["estacion"]) for s in data["estaciones"]]
 
 
 @tenacity.retry(stop=stop_after_attempt(3), wait=wait_fixed(2))
@@ -116,11 +129,23 @@ async def get_price(station_id, product_id) -> float:
 
     headers = {"Accept": "application/json"}
     session = aiohttp.ClientSession(headers=headers)
-    response = await session.get(_PRICES_ENDPOINT.format(station_id))
+    response = await session.get(_STATION_ENDPOINT.format(station_id))
     data = await response.json()
     product = _PRODUCTS[product_id]
     await session.close()
     return data[f"precio{product.code}"]
+
+
+@tenacity.retry(stop=stop_after_attempt(3), wait=wait_fixed(2))
+async def get_gas_station(station_id) -> GasStation:
+    """Get gas station by id."""
+
+    headers = {"Accept": "application/json"}
+    session = aiohttp.ClientSession(headers=headers)
+    response = await session.get(_STATION_ENDPOINT.format(station_id))
+    data = await response.json()
+    await session.close()
+    return GasStation.from_individual(data)
 
 
 def get_products() -> list[Product]:
