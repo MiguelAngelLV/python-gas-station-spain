@@ -3,6 +3,8 @@
 from dataclasses import dataclass
 
 import aiohttp
+import tenacity
+from tenacity import stop_after_attempt, wait_fixed
 
 _STATIONS_ENDPOINT = "https://geoportalgasolineras.es/geoportal/rest/busquedaEstaciones"
 _PRICES_ENDPOINT = (
@@ -74,7 +76,7 @@ class GasStation:
         """Create GasStation from a dictionary."""
         return GasStation(
             id=data["id"],
-            marquee=data["rotulo"],
+            marquee=data["rotulo"].title(),
             address=data["direccion"],
             province=data["provincia"],
             latitude=data["coordenadaY_dec"],
@@ -83,6 +85,7 @@ class GasStation:
         )
 
 
+@tenacity.retry(stop=stop_after_attempt(3), wait=wait_fixed(2))
 async def get_gas_stations(
     province_id: int | None = None,
     municipality_id: int | None = None,
@@ -107,6 +110,7 @@ async def get_gas_stations(
     return [GasStation.from_dict(s["estacion"]) for s in data["estaciones"]]
 
 
+@tenacity.retry(stop=stop_after_attempt(3), wait=wait_fixed(2))
 async def get_price(station_id, product_id) -> float:
     """Get the actual product price in selected station."""
 
@@ -124,6 +128,7 @@ def get_products() -> list[Product]:
     return list(_PRODUCTS.values())
 
 
+@tenacity.retry(stop=stop_after_attempt(3), wait=wait_fixed(2))
 async def get_provinces() -> list[Province]:
     """Get provinces list."""
 
@@ -132,9 +137,10 @@ async def get_provinces() -> list[Province]:
     response = await session.get(_PROVINCES_ENDPOINT)
     data = await response.json()
     await session.close()
-    return [Province(id=p["id"], name=p["nombre"]) for p in data["provincias"]]
+    return [Province(id=p["id"], name=p["nombre"].title()) for p in data["provincias"]]
 
 
+@tenacity.retry(stop=stop_after_attempt(3), wait=wait_fixed(2))
 async def get_municipalities(id_province: str) -> list[Municipality]:
     """Get municipalities list."""
 
