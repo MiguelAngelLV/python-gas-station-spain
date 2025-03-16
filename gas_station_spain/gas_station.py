@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 import aiohttp
 import tenacity
-from tenacity import stop_after_attempt, wait_fixed, retry_if_exception_type
+from tenacity import stop_after_attempt, wait_fixed
 
 _STATIONS_ENDPOINT = "https://geoportalgasolineras.es/geoportal/rest/busquedaEstaciones"
 _PRICES_ENDPOINT = (
@@ -84,6 +84,7 @@ class GasStation:
             municipality=data["localidad"].strip().title(),
         )
 
+
 @tenacity.retry(stop=stop_after_attempt(3), wait=wait_fixed(2))
 async def get_gas_stations(
     province_id: int | None = None,
@@ -107,6 +108,7 @@ async def get_gas_stations(
     data = await response.json()
     await session.close()
     return [GasStation.from_dict(s["estacion"]) for s in data["estaciones"]]
+
 
 @tenacity.retry(stop=stop_after_attempt(3), wait=wait_fixed(2))
 async def get_price(station_id, product_id) -> float:
