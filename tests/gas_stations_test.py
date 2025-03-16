@@ -59,7 +59,7 @@ async def test_get_municipalities():
 async def test_get_stations():
     stations = await gss.get_gas_stations(province_id=4, municipality_id=292)
     assert len(stations) > 10
-    assert any(p.marquee == "ALCAMPO" for p in stations)
+    assert any(p.marquee == "Alcampo" for p in stations)
 
 
 @pytest.mark.asyncio
