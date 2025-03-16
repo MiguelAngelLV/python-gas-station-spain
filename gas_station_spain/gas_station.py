@@ -1,18 +1,45 @@
+"""Gas Station Spain"""
+
 from dataclasses import dataclass
 
 import aiohttp
 
-from .const import GAS_STATION_ENDPOINT, GAS_STATION_PRICE_ENDPOINT
+_STATIONS_ENDPOINT = "https://geoportalgasolineras.es/geoportal/rest/busquedaEstaciones"
+_PRICES_ENDPOINT = (
+    "https://geoportalgasolineras.es/geoportal/rest/{}/busquedaEstacionPrecio"
+)
+_PROVINCES_ENDPOINT = "https://geoportalgasolineras.es/geoportal/rest/getProvincias"
+_MUNICIPALITIES_ENDPOINT = (
+    "https://geoportalgasolineras.es/geoportal/rest/getMunicipios"
+)
 
 
 @dataclass
 class Product:
+    """Product."""
+
     id: int
     name: str
     code: str
 
 
-PRODUCTS = {
+@dataclass
+class Province:
+    """Province."""
+
+    id: str
+    name: str
+
+
+@dataclass
+class Municipality:
+    """Municipality."""
+
+    id: str
+    name: str
+
+
+_PRODUCTS = {
     1: Product(id=1, name="Gasolina 95 E5", code="Gasolina95E5"),
     3: Product(id=3, name="Gasolina 98 E5", code="Gasolina98E5"),
     4: Product(id=4, name="Gasóleo A", code="GasoleoA"),
@@ -30,45 +57,92 @@ PRODUCTS = {
 }
 
 
+@dataclass
 class GasStation:
-    def __init__(self, data):
-        self.id = data['id']
-        self.marquee = data['rotulo']
-        self.address = data['direccion']
-        self.province = data['provincia']
-        self.latitude = data['coordenadaY_dec']
-        self.longitude = data['coordenadaX_dec']
-        self.municipality = data['localidad'].strip().title()
+    """Gas Station Information."""
+
+    id: int
+    marquee: str
+    address: str
+    province: str
+    latitude: float
+    longitude: float
+    municipality: str
+
+    @staticmethod
+    def from_dict(data: dict) -> "GasStation":
+        """Create GasStation from a dictionary."""
+        return GasStation(
+            id=data["id"],
+            marquee=data["rotulo"],
+            address=data["direccion"],
+            province=data["provincia"],
+            latitude=data["coordenadaY_dec"],
+            longitude=data["coordenadaX_dec"],
+            municipality=data["localidad"].strip().title(),
+        )
 
 
 async def get_gas_stations(
-        province_id: int | None = None,
-        municipality_id: int | None = None,
-        product_id: int | None = None
-):
+    province_id: int | None = None,
+    municipality_id: int | None = None,
+    product_id: int | None = None,
+) -> list[GasStation]:
+    """Get gas stations with optionals filters."""
+
     headers = {"Accept": "application/json"}
     session = aiohttp.ClientSession(headers=headers)
-    response = await session.post(GAS_STATION_ENDPOINT, json={
-        "tipoEstacion": "EESS",
-        "idProvincia": province_id,
-        "idMunicipio": municipality_id,
-        "idProducto": product_id
-    })
+    response = await session.post(
+        _STATIONS_ENDPOINT,
+        json={
+            "tipoEstacion": "EESS",
+            "idProvincia": province_id,
+            "idMunicipio": municipality_id,
+            "idProducto": product_id,
+        },
+    )
 
     data = await response.json()
     await session.close()
-    return [GasStation(s['estacion']) for s in data['estaciones']]
+    return [GasStation.from_dict(s["estacion"]) for s in data["estaciones"]]
 
 
-async def get_price(station_id, product_id):
+async def get_price(station_id, product_id) -> float:
+    """Get the actual product price in selected station."""
+
     headers = {"Accept": "application/json"}
     session = aiohttp.ClientSession(headers=headers)
-    response = await session.get(GAS_STATION_PRICE_ENDPOINT.format(station_id))
+    response = await session.get(_PRICES_ENDPOINT.format(station_id))
     data = await response.json()
-    product = PRODUCTS[product_id]
+    product = _PRODUCTS[product_id]
     await session.close()
     return data[f"precio{product.code}"]
 
 
 def get_products() -> list[Product]:
-    return list(PRODUCTS.values())
+    """Get product list."""
+    return list(_PRODUCTS.values())
+
+
+async def get_provinces() -> list[Province]:
+    """Get provinces list."""
+
+    headers = {"Accept": "application/json"}
+    session = aiohttp.ClientSession(headers=headers)
+    response = await session.get(_PROVINCES_ENDPOINT)
+    data = await response.json()
+    await session.close()
+    return [Province(id=p["id"], name=p["nombre"]) for p in data["provincias"]]
+
+
+async def get_municipalities(id_province: str) -> list[Municipality]:
+    """Get municipalities list."""
+
+    headers = {"Accept": "application/json"}
+    session = aiohttp.ClientSession(headers=headers)
+    response = await session.post(
+        _MUNICIPALITIES_ENDPOINT, data={"idProvincia": id_province}
+    )
+    data = await response.json()
+    await session.close()
+    return [Municipality(id=p["id"], name=p["desMunicipio"]) for p in data]
