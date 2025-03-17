@@ -45,10 +45,10 @@ ignore = [
 
 [tool.coverage.run]
 branch = true
-source = ["gas_station_spain"]
+source = ["gas_station_spain_api"]
 
 [tool.coverage.paths]
-source = ["gas_station_spain/"]
+source = ["gas_station_spain_api/"]
 
 [tool.coverage.report]
 fail_under = 90
