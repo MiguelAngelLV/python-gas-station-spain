@@ -14,7 +14,7 @@ Desgraciadamente, el servicio no es muy estable y es posible que ocurran errores
 
 ```python
 
-import gas_station_spain as gss
+import gas_station_spain_api as gss
 
 # Obtener listado de provincias
 provinces = await gss.get_provinces()

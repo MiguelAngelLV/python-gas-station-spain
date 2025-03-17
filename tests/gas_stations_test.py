@@ -3,7 +3,7 @@ import random
 
 import pytest
 
-import gas_station_spain as gss
+import gas_station_spain_api as gss
 
 
 @pytest.mark.parametrize("province_id, name", [(4, "ALMERÍA"), (3, "ALICANTE")])
