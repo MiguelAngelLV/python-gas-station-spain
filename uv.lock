@@ -370,8 +370,8 @@ wheels = [
 ]
 
 [[package]]
-name = "gas-station-spain"
-version = "1.0"
+name = "gas-station-spain-api"
+version = "1.2"
 source = { editable = "." }
 dependencies = [
     { name = "aiohttp" },
