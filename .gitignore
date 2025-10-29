@@ -1,3 +1,4 @@
 /tests/htmlcov/
 /tests/.coverage
 .idea
+__pycache__
