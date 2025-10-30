@@ -1,6 +1,9 @@
 """Gas Station Spain"""
 
 from dataclasses import dataclass
+import os
+import ssl
+from pathlib import Path
 
 import aiohttp
 import tenacity
@@ -14,6 +17,42 @@ _PROVINCES_ENDPOINT = "https://geoportalgasolineras.es/geoportal/rest/getProvinc
 _MUNICIPALITIES_ENDPOINT = (
     "https://geoportalgasolineras.es/geoportal/rest/getMunicipios"
 )
+
+_EXTRA_CA_ENV = "GAS_STATION_SPAIN_EXTRA_CA"
+_EXTRA_CA_FILENAME = "ACComponentesInformaticos.pem"
+_DEFAULT_CERT_PATH = Path(__file__).resolve().parent / "certs" / _EXTRA_CA_FILENAME
+
+
+def _build_ssl_context() -> ssl.SSLContext:
+    context = ssl.create_default_context()
+
+    candidates: list[Path] = []
+
+    env_value = os.environ.get(_EXTRA_CA_ENV)
+    if env_value:
+        candidates.append(Path(env_value).expanduser())
+
+    if _DEFAULT_CERT_PATH.exists():
+        candidates.append(_DEFAULT_CERT_PATH)
+
+    for candidate in candidates:
+        try:
+            context.load_verify_locations(cafile=str(candidate))
+        except OSError:
+            # If the file cannot be read we keep the default trust store.
+            continue
+
+    return context
+
+
+def _create_session(headers: dict[str, str]) -> aiohttp.ClientSession:
+    """Factory for ClientSession instances with the custom CA chain."""
+
+    connector = aiohttp.TCPConnector(ssl=_SSL_CONTEXT)
+    return aiohttp.ClientSession(headers=headers, connector=connector)
+
+
+_SSL_CONTEXT = _build_ssl_context()
 
 
 @dataclass
@@ -107,7 +146,7 @@ async def get_gas_stations(
     """Get gas stations with optionals filters."""
 
     headers = {"Accept": "application/json"}
-    session = aiohttp.ClientSession(headers=headers)
+    session = _create_session(headers=headers)
     response = await session.post(
         _STATIONS_ENDPOINT,
         json={
@@ -128,7 +167,7 @@ async def get_price(station_id, product_id) -> float:
     """Get the actual product price in selected station."""
 
     headers = {"Accept": "application/json"}
-    session = aiohttp.ClientSession(headers=headers)
+    session = _create_session(headers=headers)
     response = await session.get(_STATION_ENDPOINT.format(station_id))
     data = await response.json()
     product = _PRODUCTS[product_id]
@@ -141,7 +180,7 @@ async def get_gas_station(station_id) -> GasStation:
     """Get gas station by id."""
 
     headers = {"Accept": "application/json"}
-    session = aiohttp.ClientSession(headers=headers)
+    session = _create_session(headers=headers)
     response = await session.get(_STATION_ENDPOINT.format(station_id))
     data = await response.json()
     await session.close()
@@ -158,7 +197,7 @@ async def get_provinces() -> list[Province]:
     """Get provinces list."""
 
     headers = {"Accept": "application/json"}
-    session = aiohttp.ClientSession(headers=headers)
+    session = _create_session(headers=headers)
     response = await session.get(_PROVINCES_ENDPOINT)
     data = await response.json()
     await session.close()
@@ -170,7 +209,7 @@ async def get_municipalities(id_province: str) -> list[Municipality]:
     """Get municipalities list."""
 
     headers = {"Accept": "application/json"}
-    session = aiohttp.ClientSession(headers=headers)
+    session = _create_session(headers=headers)
     response = await session.post(
         _MUNICIPALITIES_ENDPOINT, data={"idProvincia": id_province}
     )
