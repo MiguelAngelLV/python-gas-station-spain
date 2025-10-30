@@ -20,9 +20,7 @@ _MUNICIPALITIES_ENDPOINT = (
 
 _EXTRA_CA_ENV = "GAS_STATION_SPAIN_EXTRA_CA"
 _EXTRA_CA_FILENAME = "ACComponentesInformaticos.pem"
-_DEFAULT_CERT_PATH = (
-    Path(__file__).resolve().parent / "certs" / _EXTRA_CA_FILENAME
-)
+_DEFAULT_CERT_PATH = Path(__file__).resolve().parent / "certs" / _EXTRA_CA_FILENAME
 
 
 def _build_ssl_context() -> ssl.SSLContext:
