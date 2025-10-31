@@ -1,6 +1,6 @@
 [project]
 name = "gas-station-spain-api"
-version = "1.2"
+version = "1.2.1"
 description = "Obtiene el precio actual del combustible en las distintas gasolineras de España"
 authors = [
     { name = "Miguel Ángel López", email = "miguel.angel.lopez.vicente@gmail.com" }
