@@ -8,6 +8,7 @@ from .gas_station import (
     get_provinces,
     get_gas_station,
 )
+from .exceptions import GasStationServerUnavailableException
 
 __all__ = [
     "get_gas_stations",
@@ -16,4 +17,5 @@ __all__ = [
     "get_products",
     "get_provinces",
     "get_gas_station",
+    "GasStationServerUnavailableException",
 ]
