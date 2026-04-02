@@ -82,5 +82,3 @@ async def test_get_station_by_id():
 async def test_get_price():
     price = await gss.get_price(9131, 4)
     assert price > 0.8
-
-

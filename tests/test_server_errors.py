@@ -11,7 +11,9 @@ import gas_station_spain_api as gss
 async def test_get_gas_stations_server_error_500():
     """Test that get_gas_stations raises GasStationServerUnavailableException on 500 error."""
 
-    with patch("gas_station_spain_api.gas_station._create_session") as mock_create_session:
+    with patch(
+        "gas_station_spain_api.gas_station._create_session"
+    ) as mock_create_session:
         # Mock session
         mock_session = MagicMock()
         mock_response = MagicMock()
@@ -36,7 +38,9 @@ async def test_get_gas_stations_server_error_500():
 async def test_get_gas_stations_server_error_502():
     """Test that get_gas_stations raises GasStationServerUnavailableException on 502 error."""
 
-    with patch("gas_station_spain_api.gas_station._create_session") as mock_create_session:
+    with patch(
+        "gas_station_spain_api.gas_station._create_session"
+    ) as mock_create_session:
         # Mock session
         mock_session = MagicMock()
         mock_response = MagicMock()
@@ -58,7 +62,9 @@ async def test_get_gas_stations_server_error_502():
 async def test_get_gas_stations_server_error_503():
     """Test that get_gas_stations raises GasStationServerUnavailableException on 503 error."""
 
-    with patch("gas_station_spain_api.gas_station._create_session") as mock_create_session:
+    with patch(
+        "gas_station_spain_api.gas_station._create_session"
+    ) as mock_create_session:
         # Mock session
         mock_session = MagicMock()
         mock_response = MagicMock()
@@ -80,7 +86,9 @@ async def test_get_gas_stations_server_error_503():
 async def test_get_price_server_error_500():
     """Test that get_price raises GasStationServerUnavailableException on 500 error."""
 
-    with patch("gas_station_spain_api.gas_station._create_session") as mock_create_session:
+    with patch(
+        "gas_station_spain_api.gas_station._create_session"
+    ) as mock_create_session:
         # Mock session
         mock_session = MagicMock()
         mock_response = MagicMock()
@@ -102,7 +110,9 @@ async def test_get_price_server_error_500():
 async def test_get_gas_station_server_error_500():
     """Test that get_gas_station raises GasStationServerUnavailableException on 500 error."""
 
-    with patch("gas_station_spain_api.gas_station._create_session") as mock_create_session:
+    with patch(
+        "gas_station_spain_api.gas_station._create_session"
+    ) as mock_create_session:
         # Mock session
         mock_session = MagicMock()
         mock_response = MagicMock()
@@ -124,7 +134,9 @@ async def test_get_gas_station_server_error_500():
 async def test_get_provinces_server_error_500():
     """Test that get_provinces raises GasStationServerUnavailableException on 500 error."""
 
-    with patch("gas_station_spain_api.gas_station._create_session") as mock_create_session:
+    with patch(
+        "gas_station_spain_api.gas_station._create_session"
+    ) as mock_create_session:
         # Mock session
         mock_session = MagicMock()
         mock_response = MagicMock()
@@ -146,7 +158,9 @@ async def test_get_provinces_server_error_500():
 async def test_get_municipalities_server_error_500():
     """Test that get_municipalities raises GasStationServerUnavailableException on 500 error."""
 
-    with patch("gas_station_spain_api.gas_station._create_session") as mock_create_session:
+    with patch(
+        "gas_station_spain_api.gas_station._create_session"
+    ) as mock_create_session:
         # Mock session
         mock_session = MagicMock()
         mock_response = MagicMock()
@@ -168,26 +182,30 @@ async def test_get_municipalities_server_error_500():
 async def test_get_gas_stations_success_with_mock():
     """Test that get_gas_stations works correctly with a successful mocked response."""
 
-    with patch("gas_station_spain_api.gas_station._create_session") as mock_create_session:
+    with patch(
+        "gas_station_spain_api.gas_station._create_session"
+    ) as mock_create_session:
         # Mock session
         mock_session = MagicMock()
         mock_response = MagicMock()
         mock_response.status = 200
-        mock_response.json = AsyncMock(return_value={
-            "estaciones": [
-                {
-                    "estacion": {
-                        "id": 1234,
-                        "rotulo": "TEST STATION",
-                        "direccion": "Test Address",
-                        "provincia": "ALMERÍA",
-                        "coordenadaY_dec": 36.840,
-                        "coordenadaX_dec": -2.467,
-                        "localidad": "Test City"
+        mock_response.json = AsyncMock(
+            return_value={
+                "estaciones": [
+                    {
+                        "estacion": {
+                            "id": 1234,
+                            "rotulo": "TEST STATION",
+                            "direccion": "Test Address",
+                            "provincia": "ALMERÍA",
+                            "coordenadaY_dec": 36.840,
+                            "coordenadaX_dec": -2.467,
+                            "localidad": "Test City",
+                        }
                     }
-                }
-            ]
-        })
+                ]
+            }
+        )
 
         # Setup async methods
         mock_session.post = AsyncMock(return_value=mock_response)

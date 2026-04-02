@@ -2,20 +2,37 @@
 repos:
   - repo: local
     hooks:
-      - id: ruff-check
-        name: 🐶 Ruff Linter
+      # Auto-fix hooks (run on pre-commit)
+      - id: ruff-check-fix
+        name: 🐶 Ruff Linter (auto-fix)
         language: system
         types: [python]
         entry: uv run ruff check --fix
         require_serial: true
-        stages: [pre-commit, pre-push, manual]
-      - id: ruff-format
-        name: 🐶 Ruff Formatter
+        stages: [pre-commit]
+      - id: ruff-format-fix
+        name: 🐶 Ruff Formatter (auto-fix)
         language: system
         types: [python]
         entry: uv run ruff format
         require_serial: true
-        stages: [pre-commit, pre-push, manual]
+        stages: [pre-commit]
+
+      # Verification hooks (run on pre-push and manual, same as CI)
+      - id: ruff-check
+        name: 🐶 Ruff Linter (check only - CI mode)
+        language: system
+        types: [python]
+        entry: uv run ruff check --output-format=github
+        require_serial: true
+        stages: [pre-push, manual]
+      - id: ruff-format-check
+        name: 🐶 Ruff Formatter (check only - CI mode)
+        language: system
+        types: [python]
+        entry: uv run ruff format --check
+        require_serial: true
+        stages: [pre-push, manual]
       - id: check-json
         name: Check JSON files
         language: system

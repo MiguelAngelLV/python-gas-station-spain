@@ -8,4 +8,3 @@ class GasStationServerUnavailableException(Exception):
         self.status_code = status_code
         self.message = message or f"Server returned status code {status_code}"
         super().__init__(self.message)
-
