@@ -9,6 +9,8 @@ import aiohttp
 import tenacity
 from tenacity import stop_after_attempt, wait_fixed
 
+from .exceptions import GasStationServerUnavailableException
+
 _STATIONS_ENDPOINT = "https://geoportalgasolineras.es/geoportal/rest/busquedaEstaciones"
 _STATION_ENDPOINT = (
     "https://geoportalgasolineras.es/geoportal/rest/{}/busquedaEstacionPrecio"
@@ -147,7 +149,7 @@ class GasStation:
         )
 
 
-@tenacity.retry(stop=stop_after_attempt(3), wait=wait_fixed(2))
+@tenacity.retry(stop=stop_after_attempt(3), wait=wait_fixed(2), reraise=True)
 async def get_gas_stations(
     province_id: int | None = None,
     municipality_id: int | None = None,
@@ -167,31 +169,45 @@ async def get_gas_stations(
         },
     )
 
+    if response.status >= 500:
+        await session.close()
+        raise GasStationServerUnavailableException(response.status)
+
     data = await response.json()
     await session.close()
     return [GasStation.from_list(s["estacion"]) for s in data["estaciones"]]
 
 
-@tenacity.retry(stop=stop_after_attempt(3), wait=wait_fixed(2))
+@tenacity.retry(stop=stop_after_attempt(3), wait=wait_fixed(2), reraise=True)
 async def get_price(station_id, product_id) -> float:
     """Get the actual product price in selected station."""
 
     headers = {"Accept": "application/json"}
     session = _create_session(headers=headers)
     response = await session.get(_STATION_ENDPOINT.format(station_id))
+
+    if response.status >= 500:
+        await session.close()
+        raise GasStationServerUnavailableException(response.status)
+
     data = await response.json()
     product = _PRODUCTS[product_id]
     await session.close()
     return data[f"precio{product.code}"]
 
 
-@tenacity.retry(stop=stop_after_attempt(3), wait=wait_fixed(2))
+@tenacity.retry(stop=stop_after_attempt(3), wait=wait_fixed(2), reraise=True)
 async def get_gas_station(station_id) -> GasStation:
     """Get gas station by id."""
 
     headers = {"Accept": "application/json"}
     session = _create_session(headers=headers)
     response = await session.get(_STATION_ENDPOINT.format(station_id))
+
+    if response.status >= 500:
+        await session.close()
+        raise GasStationServerUnavailableException(response.status)
+
     data = await response.json()
     await session.close()
     return GasStation.from_individual(data)
@@ -202,19 +218,24 @@ def get_products() -> list[Product]:
     return list(_PRODUCTS.values())
 
 
-@tenacity.retry(stop=stop_after_attempt(3), wait=wait_fixed(2))
+@tenacity.retry(stop=stop_after_attempt(3), wait=wait_fixed(2), reraise=True)
 async def get_provinces() -> list[Province]:
     """Get provinces list."""
 
     headers = {"Accept": "application/json"}
     session = _create_session(headers=headers)
     response = await session.get(_PROVINCES_ENDPOINT)
+
+    if response.status >= 500:
+        await session.close()
+        raise GasStationServerUnavailableException(response.status)
+
     data = await response.json()
     await session.close()
     return [Province(id=p["id"], name=p["nombre"].title()) for p in data["provincias"]]
 
 
-@tenacity.retry(stop=stop_after_attempt(3), wait=wait_fixed(2))
+@tenacity.retry(stop=stop_after_attempt(3), wait=wait_fixed(2), reraise=True)
 async def get_municipalities(id_province: str) -> list[Municipality]:
     """Get municipalities list."""
 
@@ -223,6 +244,11 @@ async def get_municipalities(id_province: str) -> list[Municipality]:
     response = await session.post(
         _MUNICIPALITIES_ENDPOINT, data={"idProvincia": id_province}
     )
+
+    if response.status >= 500:
+        await session.close()
+        raise GasStationServerUnavailableException(response.status)
+
     data = await response.json()
     await session.close()
     return [Municipality(id=p["id"], name=p["desMunicipio"]) for p in data]
